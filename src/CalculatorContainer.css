@@ -20,6 +20,10 @@ span {
   font-weight: bold;
 }
 
+span:hover {
+  opacity: 75%;
+}
+
 .general-operator {
   background-color: lightgray;
   color: gray;
