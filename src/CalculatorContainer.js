@@ -1,38 +1,28 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { setDisplayStr, setSubtotal, setOperator, resetAll } from './store/current.js';
 
 import { OPERATOR } from './constants/index.js';
 import { toggleSign, addDecimal, addTwoDecimals, calucateByValue, isNumber } from './utils/index.js';
 import './CalculatorContainer.css';
 
-const INITIAL_STATE = {
-  displayStr: '0',
-  operator: '',
-  subtotal: 0,
-}
-
 const CalculatorContainer = () => {
-  const [current, setCurrent] = useState(INITIAL_STATE);
+  const displayStr = useSelector(state => state.current.displayStr);
+  const subtotal = useSelector(state => state.current.subtotal);
+  const operator = useSelector(state => state.current.operator);
+  const dispatch = useDispatch();
 
   const handleAddingNumber = value => {
-    const {displayStr, operator, subtotal } = current;
     const needToUpdateSubtotal = displayStr !== '0' && operator !== '' && subtotal === 0
 
     if (needToUpdateSubtotal) {
-      setCurrent({
-        ...current,
-        subtotal: Number(displayStr),
-        displayStr: value,
-      });
+      dispatch(setSubtotal(Number(displayStr)));
+      dispatch(setDisplayStr(value));
     } else if (displayStr === '0') {
-      setCurrent({
-        ...current,
-        displayStr: value,
-      });
+      dispatch(setDisplayStr(value));
     } else {
-      setCurrent({
-        ...current,
-        displayStr: displayStr + value,
-      });
+      const newValue = displayStr + value;
+      dispatch(setDisplayStr(newValue));
     }
   };
 
@@ -57,7 +47,6 @@ const CalculatorContainer = () => {
   }
 
   const calculateCurrentValue = () => {
-    const { displayStr, subtotal, operator } = current;
     const params = {
       originalValue: subtotal,
       newInfo: Number(displayStr),
@@ -68,41 +57,31 @@ const CalculatorContainer = () => {
   }
 
   const handleAddingOperator = selectedOperator => {
-    const { displayStr, operator } = current;
     const isNumberModification = 
       selectedOperator === OPERATOR.CHANGE_SIGN ||
       selectedOperator === OPERATOR.PERCENTAGE ||
       selectedOperator === OPERATOR.DOT;
 
     if (selectedOperator === OPERATOR.RESET) {
-      setCurrent(INITIAL_STATE);
+      dispatch(resetAll());
     } else if (isNumberModification) {
       const updatedString = handleNumberModification(displayStr, selectedOperator);
-      setCurrent({
-        ...current,
-        displayStr: updatedString,
-      });
-    } else if (operator === '') {
-      setCurrent({
-        ...current,
-        operator: selectedOperator,
-      });
+      dispatch(setDisplayStr(updatedString));
+    }
+    else if (operator === '') {
+      dispatch(setOperator(selectedOperator));
     } else if (selectedOperator === OPERATOR.EQUAL) {
       const newValue = calculateCurrentValue();
       // reset operator after user hitting the equal sign
-      setCurrent({
-        displayStr: String(newValue),
-        operator: '',
-        subtotal: 0,
-      });
+      dispatch(setDisplayStr(String(newValue)));
+      dispatch(setSubtotal(0));
+      dispatch(setOperator(''));
     } else {
       const newValue = calculateCurrentValue();
       // otherwise update operator
-      setCurrent({
-        displayStr: String(newValue),
-        operator: selectedOperator,
-        subtotal: 0,
-      });
+      dispatch(setDisplayStr(String(newValue)));
+      dispatch(setOperator(selectedOperator));
+      dispatch(setSubtotal(0))
     }
   }
 
@@ -126,7 +105,7 @@ const CalculatorContainer = () => {
     <div>
       <div className="container">
         <div className="row">
-          <div className="sum">{current.displayStr}</div>
+          <div className="sum">{displayStr}</div>
         </div>
         <div className="row">
           <span className="general-operator" onClick={handleClick}>AC</span>
